@@ -1,0 +1,464 @@
+.TelaPrincipal {
+  min-height: 100vh;
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  display: flex;
+  font-family: 'Arial', sans-serif;
+  position: relative;
+}
+
+.back-button {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  padding: 12px 25px;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+  z-index: 1000;
+}
+
+.back-button:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+}
+
+.back-button:active {
+  transform: translateY(-1px);
+}
+
+.jogadores-sidebar {
+  width: 200px;
+  background: rgba(0, 0, 0, 0.85);
+  padding: 12px;
+  border-right: 2px solid rgba(255, 255, 255, 0.2);
+  overflow-y: auto;
+  max-height: 100vh;
+}
+
+.jogadores-sidebar h2 {
+  color: white;
+  margin: 0 0 12px 0;
+  font-size: 1.2rem;
+  text-align: center;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+.jogadores-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.jogador-item {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 4px solid #f093fb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  animation: slideIn 0.3s ease-out;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.jogador-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-validar-jogador {
+  background: #22c55e;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.btn-validar-jogador:hover {
+  background: #16a34a;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(34, 197, 94, 0.6);
+}
+
+.btn-validar-jogador:active {
+  transform: scale(0.95);
+}
+
+.btn-remover-jogador {
+  background: #ff4444;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+  flex-shrink: 0;
+}
+
+.btn-remover-jogador:hover {
+  background: #ff0000;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(255, 68, 68, 0.6);
+}
+
+.btn-remover-jogador:active {
+  transform: scale(0.95);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.jogador-nome {
+  color: white;
+  font-weight: bold;
+  display: block;
+  word-wrap: break-word;
+  font-size: 0.8rem;
+}
+
+.no-jogadores {
+  color: rgba(255, 255, 255, 0.6);
+  text-align: center;
+  padding: 20px 10px;
+  font-style: italic;
+}
+
+.jogadores-count {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  padding: 8px;
+  border-radius: 6px;
+  text-align: center;
+  font-size: 0.8rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.overlay {
+  flex: 1;
+  background: rgba(0, 0, 0, 0.7);
+  border-radius: 10px;
+  padding: 7.5px 10px;
+  margin: 5px;
+  box-shadow: 0 4px 16px 0 rgba(31, 38, 135, 0.37);
+  backdrop-filter: blur(2px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  text-align: center;
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-rows: auto auto auto auto;
+  gap: 7.5px;
+  align-items: center;
+  justify-items: center;
+  max-width: 100%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.overlay h1 {
+  color: white;
+  margin: 0;
+  font-size: 0.9rem;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+
+.logo-container {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  padding: 15px;
+  margin: 0;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  animation: fadeInScale 0.6s ease-out;
+  grid-column: 1;
+  grid-row: 2;
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+
+.logo-image {
+  max-width: 100%;
+  height: auto;
+  max-height: 120px;
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.3)) brightness(1.05);
+  transition: all 0.3s ease;
+  display: block;
+}
+
+.logo-image:hover {
+  filter: drop-shadow(0 8px 16px rgba(102, 126, 234, 0.5)) brightness(1.1) saturate(1.1);
+  transform: scale(1.02);
+}
+
+.current-number {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #ffd700;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  margin: 0;
+  min-height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #ffd700;
+  border-radius: 15px;
+  background: rgba(255, 255, 255, 0.1);
+  width: 100%;
+  max-width: 180px;
+  grid-column: 2;
+  grid-row: 2;
+}
+
+.rolling-ball {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  animation: spin 1s linear infinite;
+  box-shadow: 0 2px 7.5px rgba(102, 126, 234, 0.4);
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.buttons {
+  display: flex;
+  /* flex-direction: column; */
+  gap: 5px;
+  margin: 6px 0;
+  width: 100%;
+  max-width: 690px;
+  flex-wrap: wrap;
+  justify-content: center;
+  grid-column: 1 / -1;
+}
+
+.buttons button {
+  padding: 5px 10px;
+  font-size: 0.45rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: white;
+  white-space: nowrap;
+}
+
+.buttons button:first-child {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.buttons button:first-child:hover:not(:disabled) {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.buttons button:nth-child(2) {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+}
+
+.buttons button:nth-child(2):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(245, 87, 108, 0.6);
+}
+
+.buttons button:nth-child(3) {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  box-shadow: 0 4px 15px rgba(79, 172, 254, 0.4);
+}
+
+.buttons button:nth-child(3):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 20px rgba(79, 172, 254, 0.6);
+}
+
+.buttons button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.buttons button:active:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.drawn-numbers {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 7.5px;
+  padding: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  width: 100%;
+  max-width: 350px;
+  grid-column: 1 / -1;
+}
+
+.drawn-numbers h3 {
+  color: white;
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+}
+
+.numbers-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16px, 1fr));
+  gap: 3px;
+}
+
+.number-ball {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.4rem;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 1024px) {
+  .TelaPrincipal {
+    flex-direction: column;
+  }
+
+  .jogadores-sidebar {
+    width: 100%;
+    max-height: 150px;
+    border-right: none;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  .jogadores-sidebar h2 {
+    margin: 0;
+    min-width: 100px;
+  }
+
+  .jogadores-list {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 15px;
+    flex: 1;
+    margin: 0;
+  }
+
+  .jogador-item {
+    flex-shrink: 0;
+  }
+
+  .overlay {
+    margin: 20px;
+    padding: 30px;
+  }
+
+  .overlay h1 {
+    font-size: 2rem;
+  }
+
+  .current-number {
+    font-size: 3rem;
+  }
+
+  .buttons button {
+    padding: 12px 20px;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .jogadores-sidebar {
+    max-height: 100px;
+  }
+
+  .overlay {
+    margin: 10px;
+    padding: 20px;
+  }
+
+  .overlay h1 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .current-number {
+    font-size: 2.5rem;
+    margin: 20px 0;
+  }
+
+  .buttons button {
+    padding: 10px 15px;
+    font-size: 0.9rem;
+  }
+
+  .numbers-grid {
+    grid-template-columns: repeat(auto-fill, minmax(35px, 1fr));
+    gap: 6px;
+  }
+
+  .number-ball {
+    font-size: 0.8rem;
+  }
+}
