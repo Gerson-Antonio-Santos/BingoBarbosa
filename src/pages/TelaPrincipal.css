@@ -191,9 +191,9 @@
 }
 
 .overlay h1 {
-  color: white;
+  color: rgb(66, 14, 103);
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 1.9rem;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
   grid-column: 1 / -1;
   grid-row: 1;
@@ -285,7 +285,7 @@
   margin: 6px 0;
   width: 100%;
   max-width: 690px;
-  flex-wrap: wrap;
+  /* flex-wrap: wrap; */
   justify-content: center;
   grid-column: 1 / -1;
 }
@@ -352,7 +352,7 @@
 }
 
 .drawn-numbers h3 {
-  color: white;
+  color: rgb(60, 42, 99);
   margin: 0 0 10px 0;
   font-size: 1rem;
 }

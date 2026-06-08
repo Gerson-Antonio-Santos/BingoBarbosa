@@ -218,14 +218,14 @@ export function TelaPrincipalPage() {
           <button onClick={drawNumber} disabled={isRolling}>
             Sortear
           </button>
-          <button onClick={bingou}>Bingou!</button>
+          {/* <button onClick={bingou}>Bingou!</button> */}
           <button onClick={restart}>Reiniciar</button>
           <button 
             onClick={handleReiniciarCartelas} 
             disabled={reiniciandoCartelas || jogadores.length === 0}
             style={{ backgroundColor: '#ff6b6b' }}
           >
-            {reiniciandoCartelas ? 'Reiniciando...' : '🔄 Reiniciar Cartela'}
+            {reiniciandoCartelas ? 'Reiniciando...' : ' Nova Cartela'}
           </button>
         </div>
 

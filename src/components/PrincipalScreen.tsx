@@ -82,7 +82,7 @@ export function PrincipalScreen() {
           <button onClick={drawNumber} disabled={isRolling}>
             Sortear
           </button>
-          <button onClick={bingou}>Bingou!</button>
+          {/* <button onClick={bingou}>Bingou!</button> */}
           <button onClick={restart}>Reiniciar</button>
         </div>
 
