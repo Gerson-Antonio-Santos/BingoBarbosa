@@ -93,10 +93,10 @@ export function TelaPrincipalPage() {
     sound.play();
   };
 
-  const win = new Howl({
-    src: [winSound],
-    volume: 1,
-  });
+  // const win = new Howl({
+  //   src: [winSound],
+  //   volume: 1,
+  // });
 
   const drawNumber = () => {
     if (numbersDrawn.length >= 80 || isRolling) return;
@@ -118,10 +118,10 @@ export function TelaPrincipalPage() {
     setCurrentNumber(null);
   };
 
-  const bingou = () => {
-    win.play();
-    playSound(winSound);
-  };
+  // const bingou = () => {
+  //   win.play();
+  //   playSound(winSound);
+  // };
 
   const handleReiniciarCartelas = async () => {
     setReinicandoCartelas(true);

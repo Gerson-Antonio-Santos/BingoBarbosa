@@ -24,10 +24,10 @@ export function PrincipalScreen() {
     sound.play();
   };
 
-  const win = new Howl({
-    src: [winSound],
-    volume: 1,
-  });
+  // const win = new Howl({
+  //   src: [winSound],
+  //   volume: 1,
+  // });
 
   const drawNumber = () => {
     if (numbersDrawn.length >= 80 || isRolling) return;
@@ -49,10 +49,10 @@ export function PrincipalScreen() {
     setCurrentNumber(null);
   };
 
-  const bingou = () => {
-    win.play();
-    playSound(winSound);
-  };
+  // const bingou = () => {
+  //   win.play();
+  //   playSound(winSound);
+  // };
 
   useEffect(() => {
     const bgMusic = new Howl({
