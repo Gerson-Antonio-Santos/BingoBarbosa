@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Howl } from 'howler';
 import bgImage from '../assets/bg.jpg';
 import roletaSound from '../assets/roleta.mp3';
-import winSound from '../assets/win.mp3';
+// import winSound from '../assets/win.mp3';
 import { useBingo } from '../context/BingoContext';
 import './PrincipalScreen.css';
 
