@@ -32,6 +32,29 @@ export function TelaPrincipalPage() {
     sucesso: false,
   });
 
+  const verificarLinhaOuColuna = (numeros: number[], cartela: number[]): boolean => {
+    if (numeros.length !== 5) return false;
+
+    // Encontrar os índices dos números selecionados na cartela
+    const indices = numeros
+      .map((numero) => cartela.indexOf(numero))
+      .filter((idx) => idx !== -1);
+
+    if (indices.length !== 5) return false; // Nem todos os números estão na cartela
+
+    // Verificar se estão na mesma linha (5x5 grid)
+    const linhas = indices.map((idx) => Math.floor(idx / 5));
+    const mesmaLinha = linhas.every((linha) => linha === linhas[0]);
+
+    if (mesmaLinha) return true;
+
+    // Verificar se estão na mesma coluna (5x5 grid)
+    const colunas = indices.map((idx) => idx % 5);
+    const mesmaColuna = colunas.every((coluna) => coluna === colunas[0]);
+
+    return mesmaColuna;
+  };
+
   const validarNumeroJogador = (jogador: typeof jogadores[0]) => {
     if (!jogador.numerosSelecionados || jogador.numerosSelecionados.length === 0) {
       setValidacaoModal({
@@ -42,16 +65,24 @@ export function TelaPrincipalPage() {
     }
 
     // Verifica se TODOS os números selecionados estão em numbersDrawn
-    const todosNumerosSorteados = jogador.numerosSelecionados.filter((numero) =>
+    const numerosSorteados = jogador.numerosSelecionados.filter((numero) =>
       numbersDrawn.includes(numero)
-    ).length >= 5;
+    );
+
+    const todosNumerosSorteados = numerosSorteados.length >= 5;
+
+    // Verifica se estão em linha ou coluna
+    const estamEmLinhaOuColuna = verificarLinhaOuColuna(jogador.numerosSelecionados, jogador.cartela);
+
+    // Bingo válido: todos sorteados E estão em linha/coluna
+    const sucesso = todosNumerosSorteados && estamEmLinhaOuColuna;
 
     setValidacaoModal({
       isOpen: true,
-      sucesso: todosNumerosSorteados,
+      sucesso: sucesso,
     });
 
-    if (todosNumerosSorteados) {
+    if (sucesso) {
       const winSound2 = new Howl({
         src: [winSound],
         volume: 1,
