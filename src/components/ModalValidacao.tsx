@@ -16,12 +16,12 @@ export function ModalValidacao({ isOpen, sucesso, onClose }: ModalValidacaoProps
           {sucesso ? '🎉' : '😢'}
         </div>
         
-        <h2>{sucesso ? 'Bingou!' : 'Esse Faz o L'}</h2>
+        <h2>{sucesso ? 'BINGO!' : 'AQUI NÃO LULA -  \nFaz o L'}</h2>
         
         <p>
           {sucesso 
-            ? 'Parabéns! Todos os números foram sorteados! 🏆' 
-            : 'Ainda faltam números para serem sorteados. 📊'}
+            ? 'Parabéns! 🏆' 
+            : 'Ainda faltam números para serem sorteados. '}
         </p>
         
         <button onClick={onClose} className={`modal-validacao-button ${sucesso ? 'sucesso' : 'falha'}`}>
