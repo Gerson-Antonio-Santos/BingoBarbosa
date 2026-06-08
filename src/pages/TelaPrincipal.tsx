@@ -32,27 +32,29 @@ export function TelaPrincipalPage() {
     sucesso: false,
   });
 
-  const verificarLinhaOuColuna = (numeros: number[], cartela: number[]): boolean => {
-    if (numeros.length !== 5) return false;
-
-    // Encontrar os índices dos números selecionados na cartela
+  const temLinhaOuColunaCompleta = (numeros: number[], cartela: number[]): boolean => {
+    // Encontrar os índices dos números na cartela
     const indices = numeros
       .map((numero) => cartela.indexOf(numero))
       .filter((idx) => idx !== -1);
 
-    if (indices.length !== 5) return false; // Nem todos os números estão na cartela
+    if (indices.length < 5) return false; // Precisa ter pelo menos 5 números
 
-    // Verificar se estão na mesma linha (5x5 grid)
-    const linhas = indices.map((idx) => Math.floor(idx / 5));
-    const mesmaLinha = linhas.every((linha) => linha === linhas[0]);
+    // Verificar se existe uma linha completa (5 números em uma mesma linha)
+    for (let linha = 0; linha < 5; linha++) {
+      const linhaIndices = [linha * 5, linha * 5 + 1, linha * 5 + 2, linha * 5 + 3, linha * 5 + 4];
+      const todosNaLinha = linhaIndices.every((idx) => indices.includes(idx));
+      if (todosNaLinha) return true;
+    }
 
-    if (mesmaLinha) return true;
+    // Verificar se existe uma coluna completa (5 números em uma mesma coluna)
+    for (let coluna = 0; coluna < 5; coluna++) {
+      const colunaIndices = [coluna, coluna + 5, coluna + 10, coluna + 15, coluna + 20];
+      const todoNaColuna = colunaIndices.every((idx) => indices.includes(idx));
+      if (todoNaColuna) return true;
+    }
 
-    // Verificar se estão na mesma coluna (5x5 grid)
-    const colunas = indices.map((idx) => idx % 5);
-    const mesmaColuna = colunas.every((coluna) => coluna === colunas[0]);
-
-    return mesmaColuna;
+    return false;
   };
 
   const validarNumeroJogador = (jogador: typeof jogadores[0]) => {
@@ -64,18 +66,13 @@ export function TelaPrincipalPage() {
       return;
     }
 
-    // Verifica se TODOS os números selecionados estão em numbersDrawn
-    const numerosSorteados = jogador.numerosSelecionados.filter((numero) =>
+    // Encontrar números que foram SORTEADOS E SELECIONADOS (interseção)
+    const sorteadosESelecionados = jogador.numerosSelecionados.filter((numero) =>
       numbersDrawn.includes(numero)
     );
 
-    const todosNumerosSorteados = numerosSorteados.length >= 5;
-
-    // Verifica se estão em linha ou coluna
-    const estamEmLinhaOuColuna = verificarLinhaOuColuna(jogador.numerosSelecionados, jogador.cartela);
-
-    // Bingo válido: todos sorteados E estão em linha/coluna
-    const sucesso = todosNumerosSorteados && estamEmLinhaOuColuna;
+    // Bingo válido: existe uma linha ou coluna completa com números sorteados e selecionados
+    const sucesso = temLinhaOuColunaCompleta(sorteadosESelecionados, jogador.cartela);
 
     setValidacaoModal({
       isOpen: true,
