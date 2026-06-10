@@ -200,19 +200,27 @@ export function CartelaJogadorPage() {
         </div>
       </div>
 
-      <div className="cartela-grid">
-        {cartelaNumbers.map((item) => (
-          <div
-            key={item.id}
-            className={`cartela-number ${item.isSelected ? 'selected' : ''} ${
-              item.isDrawn ? 'drawn' : ''
-            }`}
-            onClick={() => toggleSelect(item.id, item.number)}
-          >
-            <span>{item.number}</span>
-            {item.isDrawn && <div className="draw-mark">✓</div>}
-          </div>
-        ))}
+      <div className="cartela-wrapper">
+        <div className="bingo-header">
+          {['B', 'I', 'N', 'G', 'O'].map((letra) => (
+            <span key={letra} className="bingo-header-letra">{letra}</span>
+          ))}
+        </div>
+
+        <div className="cartela-grid">
+          {cartelaNumbers.map((item) => (
+            <div
+              key={item.id}
+              className={`cartela-number ${item.isSelected ? 'selected' : ''} ${
+                item.isDrawn ? 'drawn' : ''
+              }`}
+              onClick={() => toggleSelect(item.id, item.number)}
+            >
+              <span>{item.number}</span>
+              {item.isDrawn && <div className="draw-mark">✓</div>}
+            </div>
+          ))}
+        </div>
       </div>
 
       {jogadorAtual.temPoder && (

@@ -95,6 +95,32 @@
   transform: translateY(-1px);
 }
 
+/* ── Wrapper cartela + header BINGO ── */
+.cartela-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ── Cabeçalho BINGO ── */
+.bingo-header {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 10px;
+  padding: 0 16px;
+}
+
+.bingo-header-letra {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.6rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.5), 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
 /* ── Grid da cartela ── */
 .cartela-grid {
   display: grid;
@@ -351,6 +377,8 @@
   .cartela-jogador-container { padding: 14px 10px 20px; gap: 12px; }
   .cartela-header h1 { font-size: 1.25rem; }
   .logo-image { height: 50px; }
+  .bingo-header { gap: 7px; padding: 0 12px; }
+  .bingo-header-letra { font-size: 1.3rem; }
   .cartela-grid { gap: 7px; padding: 12px; }
   .cartela-number { font-size: 1.2rem; }
   .sorteados-grid { grid-template-columns: repeat(auto-fill, minmax(36px, 1fr)); gap: 5px; }
