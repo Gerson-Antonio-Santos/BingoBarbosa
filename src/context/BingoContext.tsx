@@ -6,6 +6,9 @@ import {
   atualizarNumerosSelecionados,
   atualizarCartela as atualizarCartelaSupabase,
   deletarJogador as deletarJogadorSupabase,
+  definirPoderJogador as definirPoderJogadorSupabase,
+  limparPoderJogador as limparPoderJogadorSupabase,
+  embaralharCartela as embaralharCartelaSupabase,
 } from '../api';
 import { supabase } from '../api/supabase';
 
@@ -14,6 +17,8 @@ export interface Jogador {
   nome: string;
   cartela: number[];
   numerosSelecionados: number[];
+  temPoder: boolean;
+  sessao?: number | null;
 }
 
 interface BingoContextType {
@@ -21,28 +26,31 @@ interface BingoContextType {
   currentNumber: number | null;
   isRolling: boolean;
   jogadores: Jogador[];
+  jogadorComPoder: string | null;
+  sessaoAtual: number | null;
   setNumbersDrawn: (numbers: number[]) => void;
   setCurrentNumber: (number: number | null) => void;
   setIsRolling: (isRolling: boolean) => void;
-  adicionarJogador: (nome: string) => Promise<string | null>;
+  setSessaoAtual: (sessao: number | null) => void;
+  adicionarJogador: (nome: string, sessao?: number) => Promise<string | null>;
   removerJogador: (id: string) => Promise<void>;
   selecionarNumero: (jogadorId: string, numero: number) => Promise<void>;
   deselecionarNumero: (jogadorId: string, numero: number) => Promise<void>;
   gerarNovaCartela: (jogadorId: string) => Promise<void>;
   reiniciarTodasAsCartelas: () => Promise<void>;
   recarregarJogadores: () => Promise<void>;
+  ativarPoder: () => void;
+  embaralharCartelaJogador: (jogadorId: string) => Promise<void>;
+  limparPoder: (jogadorId: string) => Promise<void>;
   carregandoJogadores: boolean;
 }
 
 export const BingoContext = createContext<BingoContextType | undefined>(undefined);
 
-// Carregar estado inicial do localStorage
 const loadInitialState = () => {
   try {
     const saved = localStorage.getItem('bingo-state');
-    if (saved) {
-      return JSON.parse(saved);
-    }
+    if (saved) return JSON.parse(saved);
   } catch (e) {
     console.error('Erro ao carregar estado do localStorage:', e);
   }
@@ -55,7 +63,21 @@ export function BingoProvider({ children }: { children: ReactNode }) {
   const [currentNumber, setCurrentNumber] = useState<number | null>(initialState.currentNumber);
   const [isRolling, setIsRolling] = useState(false);
   const [jogadores, setJogadores] = useState<Jogador[]>([]);
-  const [carregandoJogadores, setCarregandoJogadores] = useState(true);
+  const [jogadorComPoder, setJogadorComPoder] = useState<string | null>(null);
+  const [carregandoJogadores, setCarregandoJogadores] = useState(false);
+  const [sessaoAtual, setSessaoAtualState] = useState<number | null>(() => {
+    const saved = localStorage.getItem('bingo-sessao-atual');
+    return saved ? parseInt(saved) : null;
+  });
+
+  const setSessaoAtual = (sessao: number | null) => {
+    if (sessao !== null) {
+      localStorage.setItem('bingo-sessao-atual', String(sessao));
+    } else {
+      localStorage.removeItem('bingo-sessao-atual');
+    }
+    setSessaoAtualState(sessao);
+  };
 
   const gerarCartela = () => {
     const allNumbers = Array.from({ length: 80 }, (_, i) => i + 1);
@@ -63,11 +85,16 @@ export function BingoProvider({ children }: { children: ReactNode }) {
     return shuffled.slice(0, 25);
   };
 
-  // Carregar jogadores do Supabase ao iniciar
   useEffect(() => {
+    if (!sessaoAtual) {
+      setCarregandoJogadores(false);
+      setJogadores([]);
+      return;
+    }
+
     const carregarJogadores = async () => {
       try {
-        const jogadoresDB = await listarJogadoresSupabase();
+        const jogadoresDB = await listarJogadoresSupabase(sessaoAtual);
         if (jogadoresDB) {
           setJogadores(
             jogadoresDB.map((j: any) => ({
@@ -75,6 +102,8 @@ export function BingoProvider({ children }: { children: ReactNode }) {
               nome: j.nome,
               cartela: j.cartela,
               numerosSelecionados: j.numeros_selecionados || [],
+              temPoder: j.tem_poder ?? false,
+              sessao: j.sessao,
             }))
           );
         }
@@ -83,7 +112,6 @@ export function BingoProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Carregar inicialmente
     (async () => {
       try {
         setCarregandoJogadores(true);
@@ -93,42 +121,33 @@ export function BingoProvider({ children }: { children: ReactNode }) {
       }
     })();
 
-    // Configurar polling para sincronizar a cada 1 segundo
-    const pollingInterval = setInterval(() => {
-      carregarJogadores();
-    }, 1000);
+    const pollingInterval = setInterval(carregarJogadores, 1000);
 
-    // Configurar listener em tempo real para mudanças na tabela de jogadores (como fallback extra)
     const channel = supabase
-      .channel('jogadores-changes')
+      .channel(`jogadores-sessao-${sessaoAtual}`)
       .on(
         'postgres_changes',
         {
-          event: '*', // Escuta INSERT, UPDATE e DELETE
+          event: '*',
           schema: 'public',
           table: 'jogadores',
+          filter: `sessao=eq.${sessaoAtual}`,
         },
-        (payload) => {
-          console.log('Mudança detectada no Supabase:', payload);
-          // Recarregar a lista de jogadores quando há qualquer mudança
-          carregarJogadores();
-        }
+        () => carregarJogadores()
       )
-      .subscribe((status) => {
-        console.log('Supabase channel status:', status);
-      });
+      .subscribe();
 
-    // Limpar intervalos e inscrições quando o componente desmonta
     return () => {
       clearInterval(pollingInterval);
       channel.unsubscribe();
     };
-  }, []);
+  }, [sessaoAtual]);
 
-  const adicionarJogador = async (nome: string): Promise<string | null> => {
+  const adicionarJogador = async (nome: string, sessao?: number): Promise<string | null> => {
     try {
       const cartela = gerarCartela();
-      const jogadorDB = await criarJogadorSupabase(nome, cartela);
+      const sessaoParaUsar = sessao ?? sessaoAtual ?? undefined;
+      const jogadorDB = await criarJogadorSupabase(nome, cartela, sessaoParaUsar);
 
       if (jogadorDB) {
         const novoJogador: Jogador = {
@@ -136,6 +155,8 @@ export function BingoProvider({ children }: { children: ReactNode }) {
           nome: jogadorDB.nome,
           cartela: jogadorDB.cartela,
           numerosSelecionados: jogadorDB.numeros_selecionados || [],
+          temPoder: jogadorDB.tem_poder ?? false,
+          sessao: jogadorDB.sessao,
         };
         setJogadores((prev) => [...prev, novoJogador]);
         return jogadorDB.id;
@@ -162,13 +183,8 @@ export function BingoProvider({ children }: { children: ReactNode }) {
       if (jogador) {
         const numeros = [...new Set([...jogador.numerosSelecionados, numero])];
         await atualizarNumerosSelecionados(jogadorId, numeros);
-
         setJogadores((prev) =>
-          prev.map((j) =>
-            j.id === jogadorId
-              ? { ...j, numerosSelecionados: numeros }
-              : j
-          )
+          prev.map((j) => (j.id === jogadorId ? { ...j, numerosSelecionados: numeros } : j))
         );
       }
     } catch (err) {
@@ -182,13 +198,8 @@ export function BingoProvider({ children }: { children: ReactNode }) {
       if (jogador) {
         const numeros = jogador.numerosSelecionados.filter((n) => n !== numero);
         await atualizarNumerosSelecionados(jogadorId, numeros);
-
         setJogadores((prev) =>
-          prev.map((j) =>
-            j.id === jogadorId
-              ? { ...j, numerosSelecionados: numeros }
-              : j
-          )
+          prev.map((j) => (j.id === jogadorId ? { ...j, numerosSelecionados: numeros } : j))
         );
       }
     } catch (err) {
@@ -200,16 +211,9 @@ export function BingoProvider({ children }: { children: ReactNode }) {
     try {
       const novaCartela = gerarCartela();
       await atualizarCartelaSupabase(jogadorId, novaCartela);
-
       setJogadores((prev) =>
         prev.map((j) =>
-          j.id === jogadorId
-            ? {
-                ...j,
-                cartela: novaCartela,
-                numerosSelecionados: [],
-              }
-            : j
+          j.id === jogadorId ? { ...j, cartela: novaCartela, numerosSelecionados: [] } : j
         )
       );
     } catch (err) {
@@ -219,15 +223,12 @@ export function BingoProvider({ children }: { children: ReactNode }) {
 
   const reiniciarTodasAsCartelas = async () => {
     try {
-      // Gerar novas cartelas para cada jogador
       const novasCartelas: { [key: string]: number[] } = {};
       for (const jogador of jogadores) {
         const novaCartela = gerarCartela();
         novasCartelas[jogador.id] = novaCartela;
         await atualizarCartelaSupabase(jogador.id, novaCartela);
       }
-
-      // Atualizar estado local com as mesmas cartelas
       setJogadores((prev) =>
         prev.map((j) => ({
           ...j,
@@ -242,7 +243,7 @@ export function BingoProvider({ children }: { children: ReactNode }) {
 
   const recarregarJogadores = async () => {
     try {
-      const jogadoresDB = await listarJogadoresSupabase();
+      const jogadoresDB = await listarJogadoresSupabase(sessaoAtual ?? undefined);
       if (jogadoresDB) {
         setJogadores(
           jogadoresDB.map((j: any) => ({
@@ -250,6 +251,8 @@ export function BingoProvider({ children }: { children: ReactNode }) {
             nome: j.nome,
             cartela: j.cartela,
             numerosSelecionados: j.numeros_selecionados || [],
+            temPoder: j.tem_poder ?? false,
+            sessao: j.sessao,
           }))
         );
       }
@@ -258,16 +261,45 @@ export function BingoProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Salvar estado no localStorage sempre que mudar
+  const ativarPoder = () => {
+    if (jogadores.length === 0) return;
+    const jogadorAleatorio = jogadores[Math.floor(Math.random() * jogadores.length)];
+    setJogadorComPoder(jogadorAleatorio.id);
+    definirPoderJogadorSupabase(jogadorAleatorio.id, sessaoAtual ?? undefined).catch(console.error);
+  };
+
+  const embaralharCartelaJogador = async (jogadorId: string) => {
+    try {
+      const jogador = jogadores.find((j) => j.id === jogadorId);
+      if (jogador) {
+        const novaCartela = [...jogador.cartela].sort(() => Math.random() - 0.5);
+        await embaralharCartelaSupabase(jogadorId, novaCartela);
+        setJogadores((prev) =>
+          prev.map((j) => (j.id === jogadorId ? { ...j, cartela: novaCartela } : j))
+        );
+      }
+    } catch (err) {
+      console.error('Erro ao embaralhar cartela:', err);
+    }
+  };
+
+  const limparPoder = async (jogadorId: string) => {
+    try {
+      await limparPoderJogadorSupabase(jogadorId);
+      setJogadorComPoder(null);
+      setJogadores((prev) =>
+        prev.map((j) => (j.id === jogadorId ? { ...j, temPoder: false } : j))
+      );
+    } catch (err) {
+      console.error('Erro ao limpar poder:', err);
+    }
+  };
+
   useEffect(() => {
-    const state = {
-      numbersDrawn,
-      currentNumber,
-    };
+    const state = { numbersDrawn, currentNumber };
     localStorage.setItem('bingo-state', JSON.stringify(state));
   }, [numbersDrawn, currentNumber]);
 
-  // Listener para sincronizar entre abas
   useEffect(() => {
     const handleStorageChange = (event: StorageEvent) => {
       if (event.key === 'bingo-state' && event.newValue) {
@@ -292,9 +324,12 @@ export function BingoProvider({ children }: { children: ReactNode }) {
         currentNumber,
         isRolling,
         jogadores,
+        jogadorComPoder,
+        sessaoAtual,
         setNumbersDrawn,
         setCurrentNumber,
         setIsRolling,
+        setSessaoAtual,
         adicionarJogador,
         removerJogador,
         selecionarNumero,
@@ -302,6 +337,9 @@ export function BingoProvider({ children }: { children: ReactNode }) {
         gerarNovaCartela,
         reiniciarTodasAsCartelas,
         recarregarJogadores,
+        ativarPoder,
+        embaralharCartelaJogador,
+        limparPoder,
         carregandoJogadores,
       }}
     >

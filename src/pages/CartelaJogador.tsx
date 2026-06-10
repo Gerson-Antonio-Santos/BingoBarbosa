@@ -3,7 +3,7 @@ import { useBingo } from '../context/BingoContext';
 import { buscarJogador } from '../api/jogadoresController';
 import { ModalNome } from '../components/Modal';
 import './CartelaJogador.css';
-import logoJB from '../assets/images/Logo_JB_Joice_Bingo_Azul.png'; 
+import logoJB from '../assets/images/Logo_JB_Joice_Bingo_Azul.png';
 
 interface CarteleNumber {
   id: string;
@@ -13,39 +13,44 @@ interface CarteleNumber {
 }
 
 export function CartelaJogadorPage() {
-  const { 
-    numbersDrawn, 
-    adicionarJogador, 
-    jogadores, 
+  const {
+    numbersDrawn,
+    adicionarJogador,
+    jogadores,
     selecionarNumero,
     deselecionarNumero,
     carregandoJogadores,
     recarregarJogadores,
     removerJogador,
+    embaralharCartelaJogador,
+    limparPoder,
+    setSessaoAtual,
+    sessaoAtual,
   } = useBingo();
   const [jogadorId, setJogadorId] = useState<string | null>(null);
   const [cartelaNumbers, setCartelaNumbers] = useState<CarteleNumber[]>([]);
   const [showModal, setShowModal] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [showPoderModal, setShowPoderModal] = useState(false);
+  const [usandoPoder, setUsandoPoder] = useState(false);
 
   const jogadorAtual = jogadores.find((j) => j.id === jogadorId);
 
-  // Carregar jogadorId do localStorage ao iniciar e fazer primeiro sync
   useEffect(() => {
     const jogadorIdSalvo = localStorage.getItem('jogador-id');
-    if (jogadorIdSalvo) {
+    if (jogadorIdSalvo && sessaoAtual) {
       setJogadorId(jogadorIdSalvo);
       setShowModal(false);
     }
-  }, []);
+  }, [sessaoAtual]);
 
-  const handleNomeSubmit = async (nome: string) => {
+  const handleNomeSubmit = async (nome: string, sessaoCode: number) => {
     setSalvando(true);
     try {
-      const novoJogadorId = await adicionarJogador(nome);
+      setSessaoAtual(sessaoCode);
+      const novoJogadorId = await adicionarJogador(nome, sessaoCode);
       if (novoJogadorId) {
         setJogadorId(novoJogadorId);
-        // Salvar no localStorage
         localStorage.setItem('jogador-id', novoJogadorId);
         setShowModal(false);
       } else {
@@ -58,55 +63,44 @@ export function CartelaJogadorPage() {
     }
   };
 
-  // Detectar se o jogador foi removido e limpar localStorage
   useEffect(() => {
-    if (jogadorId && !jogadorAtual) {
-      // Jogador foi removido, limpar localStorage e mostrar modal
+    if (!carregandoJogadores && jogadorId && !jogadorAtual) {
       localStorage.removeItem('jogador-id');
       setJogadorId(null);
       setShowModal(true);
     }
-  }, [jogadorId, jogadorAtual]);
+  }, [jogadorId, jogadorAtual, carregandoJogadores]);
 
   const handleSair = async () => {
     if (!jogadorId) return;
-    
+
     try {
-      // Remover jogador do banco de dados
       await removerJogador(jogadorId);
-      // Recarregar a lista de jogadores para atualizar a TelaPrincipal
       await recarregarJogadores();
     } catch (err) {
       console.error('Erro ao remover jogador:', err);
     } finally {
-      // Limpar localStorage e voltar para modal
       localStorage.removeItem('jogador-id');
       setJogadorId(null);
       setShowModal(true);
     }
   };
 
-  // Sincronização da cartela com o banco em tempo real
   useEffect(() => {
     if (!jogadorId) return;
 
     const syncCartela = async () => {
       try {
-        // Buscar dados atualizados do banco
         await buscarJogador(jogadorId);
-        // Recarregar todos os jogadores para manter em sync
         await recarregarJogadores();
       } catch (err) {
         console.error('Erro ao sincronizar cartela:', err);
       }
     };
 
-    // Fazer sync imediato na primeira vez
     syncCartela();
 
-    // Depois sincronizar a cada 3 segundos
     const interval = setInterval(syncCartela, 3000);
-
     return () => clearInterval(interval);
   }, [jogadorId, recarregarJogadores]);
 
@@ -122,6 +116,20 @@ export function CartelaJogadorPage() {
     }
   }, [jogadorAtual, numbersDrawn]);
 
+  const handleUsarPoder = async (targetId: string) => {
+    if (!jogadorId) return;
+    setUsandoPoder(true);
+    try {
+      await embaralharCartelaJogador(targetId);
+      await limparPoder(jogadorId);
+    } catch (err) {
+      console.error('Erro ao usar poder:', err);
+    } finally {
+      setUsandoPoder(false);
+      setShowPoderModal(false);
+    }
+  };
+
   const toggleSelect = async (id: string, numero: number) => {
     if (!jogadorId) return;
 
@@ -129,9 +137,7 @@ export function CartelaJogadorPage() {
 
     setCartelaNumbers((prev) =>
       prev.map((item) =>
-        item.id === id
-          ? { ...item, isSelected: !item.isSelected }
-          : item
+        item.id === id ? { ...item, isSelected: !item.isSelected } : item
       )
     );
 
@@ -160,11 +166,11 @@ export function CartelaJogadorPage() {
 
   return (
     <div className="cartela-jogador-container">
-      
+
       <div className="cartela-header">
         <div className="logo-container">
-          <img 
-            src={logoJB} 
+          <img
+            src={logoJB}
             alt="JB - Joice's Bingo"
             className="logo-image"
           />
@@ -172,7 +178,10 @@ export function CartelaJogadorPage() {
         <h1>🎫 Sua Cartela 🎫</h1>
         <div className="jogador-info">
           <span className="jogador-badge">👤 {jogadorAtual.nome}</span>
-          <button 
+          {sessaoAtual && (
+            <span className="sessao-badge-cartela">Sessão #{sessaoAtual}</span>
+          )}
+          <button
             onClick={handleSair}
             style={{
               padding: '8px 16px',
@@ -206,9 +215,43 @@ export function CartelaJogadorPage() {
         ))}
       </div>
 
-      
+      {jogadorAtual.temPoder && (
+        <button
+          className="btn-poder-jogador"
+          onClick={() => setShowPoderModal(true)}
+          title="Você tem o poder! Embaralhe a cartela de outro jogador."
+        >
+          🔥 poderJogador
+        </button>
+      )}
 
-      
+      {showPoderModal && (
+        <div className="modal-poder-overlay" onClick={() => setShowPoderModal(false)}>
+          <div className="modal-poder-content" onClick={(e) => e.stopPropagation()}>
+            <h3>🔥 Escolha um jogador para embaralhar a cartela!</h3>
+            <div className="modal-poder-lista">
+              {jogadores
+                .filter((j) => j.id !== jogadorId)
+                .map((j) => (
+                  <button
+                    key={j.id}
+                    className="modal-poder-jogador-btn"
+                    onClick={() => handleUsarPoder(j.id)}
+                    disabled={usandoPoder}
+                  >
+                    👤 {j.nome}
+                  </button>
+                ))}
+              {jogadores.filter((j) => j.id !== jogadorId).length === 0 && (
+                <p className="modal-poder-vazio">Nenhum outro jogador na partida.</p>
+              )}
+            </div>
+            <button className="modal-poder-cancelar" onClick={() => setShowPoderModal(false)}>
+              Cancelar
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="sorteados-info">
         <h3>Números Sorteados: {numbersDrawn.length}</h3>

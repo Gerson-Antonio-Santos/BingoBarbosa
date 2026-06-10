@@ -19,11 +19,13 @@ export function TelaPrincipalPage() {
     currentNumber,
     isRolling,
     jogadores,
+    sessaoAtual,
     setNumbersDrawn,
     setCurrentNumber,
     setIsRolling,
     reiniciarTodasAsCartelas,
     removerJogador,
+    ativarPoder,
   } = useBingo();
 
   const [reiniciandoCartelas, setReinicandoCartelas] = useState(false);
@@ -198,17 +200,15 @@ export function TelaPrincipalPage() {
         </div>
       </div>
 
-      {/* Conteúdo Principal */}
+
       <div className="overlay">
-        
-        <div className="logo-container">
-          <img 
-            src={logoJB} 
-            alt="JB - Joice's Bingo"
-            className="logo-image"
-          />
+        <div className="overlay-header">
+          <img src={logoJB} alt="JB - Joice's Bingo" className="logo-image" />
+          <h1>🎰 BINGO BARBOSA 🎰</h1>
+          {sessaoAtual && (
+            <div className="sessao-badge">Sessão #{sessaoAtual}</div>
+          )}
         </div>
-        <h1>🎰 BINGO BARBOSA 🎰</h1>
 
         <div className="current-number">
           {isRolling ? <div className="rolling-ball"></div> : currentNumber ?? '--'}
@@ -216,26 +216,31 @@ export function TelaPrincipalPage() {
 
         <div className="buttons">
           <button onClick={drawNumber} disabled={isRolling}>
-            Sortear
+            🎲 Sortear
           </button>
-          {/* <button onClick={bingou}>Bingou!</button> */}
-          <button onClick={restart}>Reiniciar</button>
-          <button 
-            onClick={handleReiniciarCartelas} 
+          <button onClick={restart}>🔄 Reiniciar</button>
+          <button
+            className="btn-nova-cartela"
+            onClick={handleReiniciarCartelas}
             disabled={reiniciandoCartelas || jogadores.length === 0}
-            style={{ backgroundColor: '#ff6b6b' }}
           >
-            {reiniciandoCartelas ? 'Reiniciando...' : ' Nova Cartela'}
+            {reiniciandoCartelas ? 'Reiniciando...' : '🃏 Nova Cartela'}
+          </button>
+          <button
+            className="btn-ativar-poder"
+            onClick={ativarPoder}
+            disabled={jogadores.length === 0}
+            title="Sorteia um jogador para receber o poder"
+          >
+            ⚡ Ativar Poder
           </button>
         </div>
 
         <div className="drawn-numbers">
-          <h3>Números Sorteados:</h3>
+          <h3>Números Sorteados: <span className="count">{numbersDrawn.length}</span>/80</h3>
           <div className="numbers-grid">
             {numbersDrawn.map((n) => (
-              <span key={n} className="number-ball">
-                {n}
-              </span>
+              <span key={n} className="number-ball">{n}</span>
             ))}
           </div>
         </div>
