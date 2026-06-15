@@ -80,9 +80,25 @@ export function BingoProvider({ children }: { children: ReactNode }) {
   };
 
   const gerarCartela = () => {
-    const allNumbers = Array.from({ length: 80 }, (_, i) => i + 1);
-    const shuffled = allNumbers.sort(() => Math.random() - 0.5);
-    return shuffled.slice(0, 25);
+    const ranges = [
+      { min: 1,  max: 15 },
+      { min: 16, max: 30 },
+      { min: 31, max: 45 },
+      { min: 46, max: 60 },
+      { min: 61, max: 80 },
+    ];
+    const columns = ranges.map(({ min, max }) => {
+      const pool = Array.from({ length: max - min + 1 }, (_, i) => min + i);
+      pool.sort(() => Math.random() - 0.5);
+      return pool.slice(0, 5);
+    });
+    const cartela: number[] = [];
+    for (let row = 0; row < 5; row++) {
+      for (let col = 0; col < 5; col++) {
+        cartela.push(columns[col][row]);
+      }
+    }
+    return cartela;
   };
 
   useEffect(() => {
@@ -271,13 +287,27 @@ export function BingoProvider({ children }: { children: ReactNode }) {
   const embaralharCartelaJogador = async (jogadorId: string) => {
     try {
       const jogador = jogadores.find((j) => j.id === jogadorId);
-      if (jogador) {
-        const novaCartela = [...jogador.cartela].sort(() => Math.random() - 0.5);
-        await embaralharCartelaSupabase(jogadorId, novaCartela);
-        setJogadores((prev) =>
-          prev.map((j) => (j.id === jogadorId ? { ...j, cartela: novaCartela } : j))
-        );
+      if (!jogador) return;
+
+      // Embaralha cada coluna independentemente, mantendo os números na coluna correta
+      const columns: number[][] = [];
+      for (let col = 0; col < 5; col++) {
+        const colNumbers = [0, 1, 2, 3, 4].map((row) => jogador.cartela[row * 5 + col]);
+        colNumbers.sort(() => Math.random() - 0.5);
+        columns.push(colNumbers);
       }
+
+      const novaCartela: number[] = [];
+      for (let row = 0; row < 5; row++) {
+        for (let col = 0; col < 5; col++) {
+          novaCartela.push(columns[col][row]);
+        }
+      }
+
+      await embaralharCartelaSupabase(jogadorId, novaCartela);
+      setJogadores((prev) =>
+        prev.map((j) => (j.id === jogadorId ? { ...j, cartela: novaCartela } : j))
+      );
     } catch (err) {
       console.error('Erro ao embaralhar cartela:', err);
     }
