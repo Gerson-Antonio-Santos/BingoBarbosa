@@ -203,6 +203,27 @@ export async function limparPoderJogador(id: string): Promise<boolean> {
   }
 }
 
+export async function atualizarCartelaENumeros(
+  id: string,
+  cartela: number[],
+  numeros_selecionados: number[]
+): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from('jogadores')
+      .update({ cartela, numeros_selecionados })
+      .eq('id', id);
+    if (error) {
+      console.error('Erro ao atualizar cartela e números:', error);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Erro ao atualizar cartela e números:', err);
+    return false;
+  }
+}
+
 export async function embaralharCartela(id: string, cartela: number[]): Promise<boolean> {
   try {
     const { error } = await supabase

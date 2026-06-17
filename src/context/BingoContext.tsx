@@ -5,6 +5,7 @@ import {
   listarJogadores as listarJogadoresSupabase,
   atualizarNumerosSelecionados,
   atualizarCartela as atualizarCartelaSupabase,
+  atualizarCartelaENumeros as atualizarCartelaENumerosSupabase,
   deletarJogador as deletarJogadorSupabase,
   definirPoderJogador as definirPoderJogadorSupabase,
   limparPoderJogador as limparPoderJogadorSupabase,
@@ -42,6 +43,7 @@ interface BingoContextType {
   ativarPoder: () => void;
   embaralharCartelaJogador: (jogadorId: string) => Promise<void>;
   limparPoder: (jogadorId: string) => Promise<void>;
+  trocarCartelas: () => Promise<void>;
   carregandoJogadores: boolean;
 }
 
@@ -325,6 +327,55 @@ export function BingoProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const trocarCartelas = async () => {
+    if (jogadores.length < 2) return;
+
+    const shuffled = [...jogadores].sort(() => Math.random() - 0.5);
+    const swapInfo: { jogadorId: string; recebidoDeId: string; recebidoDeNome: string }[] = [];
+    const newStates = new Map<string, { cartela: number[]; numerosSelecionados: number[] }>();
+
+    for (let i = 0; i + 1 < shuffled.length; i += 2) {
+      const a = shuffled[i];
+      const b = shuffled[i + 1];
+      newStates.set(a.id, { cartela: b.cartela, numerosSelecionados: b.numerosSelecionados });
+      newStates.set(b.id, { cartela: a.cartela, numerosSelecionados: a.numerosSelecionados });
+      swapInfo.push({ jogadorId: a.id, recebidoDeId: b.id, recebidoDeNome: b.nome });
+      swapInfo.push({ jogadorId: b.id, recebidoDeId: a.id, recebidoDeNome: a.nome });
+    }
+
+    try {
+      await Promise.all(
+        Array.from(newStates.entries()).map(([id, { cartela, numerosSelecionados }]) =>
+          atualizarCartelaENumerosSupabase(id, cartela, numerosSelecionados)
+        )
+      );
+
+      setJogadores((prev) =>
+        prev.map((j) => {
+          const ns = newStates.get(j.id);
+          return ns ? { ...j, cartela: ns.cartela, numerosSelecionados: ns.numerosSelecionados } : j;
+        })
+      );
+
+      if (sessaoAtual) {
+        const broadcastChannel = supabase.channel(`bingo-events-${sessaoAtual}`);
+        await new Promise<void>((resolve) => {
+          broadcastChannel.subscribe((status) => {
+            if (status === 'SUBSCRIBED') resolve();
+          });
+        });
+        await broadcastChannel.send({
+          type: 'broadcast',
+          event: 'cartelas_trocadas',
+          payload: { swaps: swapInfo },
+        });
+        broadcastChannel.unsubscribe();
+      }
+    } catch (err) {
+      console.error('Erro ao trocar cartelas:', err);
+    }
+  };
+
   useEffect(() => {
     const state = { numbersDrawn, currentNumber };
     localStorage.setItem('bingo-state', JSON.stringify(state));
@@ -370,6 +421,7 @@ export function BingoProvider({ children }: { children: ReactNode }) {
         ativarPoder,
         embaralharCartelaJogador,
         limparPoder,
+        trocarCartelas,
         carregandoJogadores,
       }}
     >

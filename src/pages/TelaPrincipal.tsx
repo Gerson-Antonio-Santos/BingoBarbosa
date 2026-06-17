@@ -26,9 +26,11 @@ export function TelaPrincipalPage() {
     reiniciarTodasAsCartelas,
     removerJogador,
     ativarPoder,
+    trocarCartelas,
   } = useBingo();
 
   const [reiniciandoCartelas, setReinicandoCartelas] = useState(false);
+  const [trocandoCartelas, setTrocandoCartelas] = useState(false);
   const [validacaoModal, setValidacaoModal] = useState({
     isOpen: false,
     sucesso: false,
@@ -124,6 +126,17 @@ export function TelaPrincipalPage() {
   //   win.play();
   //   playSound(winSound);
   // };
+
+  const handleTrocarCartelas = async () => {
+    setTrocandoCartelas(true);
+    try {
+      await trocarCartelas();
+    } catch (err) {
+      console.error('Erro ao trocar cartelas:', err);
+    } finally {
+      setTrocandoCartelas(false);
+    }
+  };
 
   const handleReiniciarCartelas = async () => {
     setReinicandoCartelas(true);
@@ -233,6 +246,14 @@ export function TelaPrincipalPage() {
             title="Sorteia um jogador para receber o poder"
           >
             ⚡ Ativar Poder
+          </button>
+          <button
+            className="btn-trocar-cartela"
+            onClick={handleTrocarCartelas}
+            disabled={trocandoCartelas || jogadores.length < 2}
+            title="Troca as cartelas entre os jogadores aleatoriamente"
+          >
+            {trocandoCartelas ? 'Trocando...' : '🔀 Trocar Cartela'}
           </button>
         </div>
 

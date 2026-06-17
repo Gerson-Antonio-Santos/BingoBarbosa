@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useBingo } from '../context/BingoContext';
 import { buscarJogador } from '../api/jogadoresController';
+import { supabase } from '../api/supabase';
 import { ModalNome } from '../components/Modal';
 import './CartelaJogador.css';
 import logoJB from '../assets/images/Logo_JB_Joice_Bingo_Azul.png';
@@ -33,6 +34,7 @@ export function CartelaJogadorPage() {
   const [salvando, setSalvando] = useState(false);
   const [showPoderModal, setShowPoderModal] = useState(false);
   const [usandoPoder, setUsandoPoder] = useState(false);
+  const [notificacaoTroca, setNotificacaoTroca] = useState<string | null>(null);
 
   const jogadorAtual = jogadores.find((j) => j.id === jogadorId);
 
@@ -103,6 +105,26 @@ export function CartelaJogadorPage() {
     const interval = setInterval(syncCartela, 3000);
     return () => clearInterval(interval);
   }, [jogadorId, recarregarJogadores]);
+
+  useEffect(() => {
+    if (!sessaoAtual || !jogadorId) return;
+
+    const channel = supabase
+      .channel(`bingo-events-${sessaoAtual}`)
+      .on(
+        'broadcast',
+        { event: 'cartelas_trocadas' },
+        (msg: { payload: { swaps: { jogadorId: string; recebidoDeNome: string }[] } }) => {
+          const meuSwap = msg.payload.swaps.find((s) => s.jogadorId === jogadorId);
+          if (meuSwap) {
+            setNotificacaoTroca(meuSwap.recebidoDeNome);
+          }
+        }
+      )
+      .subscribe();
+
+    return () => { channel.unsubscribe(); };
+  }, [sessaoAtual, jogadorId]);
 
   useEffect(() => {
     if (jogadorAtual) {
@@ -199,6 +221,13 @@ export function CartelaJogadorPage() {
           </button>
         </div>
       </div>
+
+      {notificacaoTroca && (
+        <div className="notificacao-troca" onClick={() => setNotificacaoTroca(null)}>
+          <span>🔀 Você recebeu a cartela de <strong>{notificacaoTroca}</strong>!</span>
+          <button className="notificacao-fechar" aria-label="Fechar">✕</button>
+        </div>
+      )}
 
       <div className="cartela-wrapper">
         <div className="bingo-header">
