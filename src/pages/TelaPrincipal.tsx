@@ -6,6 +6,7 @@ import bgImage from '../assets/bg.jpg';
 import roletaSound from '../assets/roleta.mp3';
 import winSound from '../assets/win.mp3';
 import { useBingo } from '../context/BingoContext';
+import { atualizarNumerosSelecionados } from '../api';
 import { ModalValidacao } from '../components/ModalValidacao';
 import './TelaPrincipal.css';
 import logoJB from '../assets/images/Logo_JB_Joice_Bingo_Azul.png'; 
@@ -31,9 +32,16 @@ export function TelaPrincipalPage() {
 
   const [reiniciandoCartelas, setReinicandoCartelas] = useState(false);
   const [trocandoCartelas, setTrocandoCartelas] = useState(false);
-  const [validacaoModal, setValidacaoModal] = useState({
+  const [validacaoModal, setValidacaoModal] = useState<{
+    isOpen: boolean;
+    sucesso: boolean;
+    jogadorId: string | null;
+    numerosInvalidos: number[];
+  }>({
     isOpen: false,
     sucesso: false,
+    jogadorId: null,
+    numerosInvalidos: [],
   });
 
   const temLinhaOuColunaCompleta = (numeros: number[], cartela: number[]): boolean => {
@@ -63,10 +71,7 @@ export function TelaPrincipalPage() {
 
   const validarNumeroJogador = (jogador: typeof jogadores[0]) => {
     if (!jogador.numerosSelecionados || jogador.numerosSelecionados.length === 0) {
-      setValidacaoModal({
-        isOpen: true,
-        sucesso: false,
-      });
+      setValidacaoModal({ isOpen: true, sucesso: false, jogadorId: jogador.id, numerosInvalidos: [] });
       return;
     }
 
@@ -78,9 +83,13 @@ export function TelaPrincipalPage() {
     // Bingo válido: existe uma linha ou coluna completa com números sorteados e selecionados
     const sucesso = temLinhaOuColunaCompleta(sorteadosESelecionados, jogador.cartela);
 
+    const numerosInvalidos = jogador.numerosSelecionados.filter((n) => !numbersDrawn.includes(n));
+
     setValidacaoModal({
       isOpen: true,
-      sucesso: sucesso,
+      sucesso,
+      jogadorId: jogador.id,
+      numerosInvalidos,
     });
 
     if (sucesso) {
@@ -147,6 +156,22 @@ export function TelaPrincipalPage() {
     } finally {
       setReinicandoCartelas(false);
     }
+  };
+
+  const handleRemoverInvalidos = async () => {
+    const { jogadorId, numerosInvalidos } = validacaoModal;
+    if (!jogadorId || numerosInvalidos.length === 0) return;
+
+    const jogador = jogadores.find((j) => j.id === jogadorId);
+    if (!jogador) return;
+
+    const numerosValidos = jogador.numerosSelecionados.filter((n) => !numerosInvalidos.includes(n));
+    try {
+      await atualizarNumerosSelecionados(jogadorId, numerosValidos);
+    } catch (err) {
+      console.error('Erro ao remover números inválidos:', err);
+    }
+    setValidacaoModal((prev) => ({ ...prev, isOpen: false }));
   };
 
   const handleRemoverJogador = async (jogadorId: string) => {
@@ -267,10 +292,12 @@ export function TelaPrincipalPage() {
         </div>
       </div>
 
-      <ModalValidacao 
+      <ModalValidacao
         isOpen={validacaoModal.isOpen}
         sucesso={validacaoModal.sucesso}
-        onClose={() => setValidacaoModal({ ...validacaoModal, isOpen: false })}
+        numerosInvalidos={validacaoModal.numerosInvalidos}
+        onClose={() => setValidacaoModal((prev) => ({ ...prev, isOpen: false }))}
+        onRemoverInvalidos={handleRemoverInvalidos}
       />
     </div>
   );
