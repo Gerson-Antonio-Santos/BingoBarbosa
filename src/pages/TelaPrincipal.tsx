@@ -126,9 +126,19 @@ export function TelaPrincipalPage() {
     }, 1000);
   };
 
-  const restart = () => {
+  const restart = async () => {
     setNumbersDrawn([]);
     setCurrentNumber(null);
+    if (jogadores.length > 0) {
+      setReinicandoCartelas(true);
+      try {
+        await reiniciarTodasAsCartelas();
+      } catch (err) {
+        console.error('Erro ao reiniciar cartelas:', err);
+      } finally {
+        setReinicandoCartelas(false);
+      }
+    }
   };
 
   // const bingou = () => {
@@ -256,7 +266,9 @@ export function TelaPrincipalPage() {
           <button onClick={drawNumber} disabled={isRolling}>
             🎲 Sortear
           </button>
-          <button onClick={restart}>🔄 Reiniciar</button>
+          <button onClick={restart} disabled={reiniciandoCartelas}>
+            {reiniciandoCartelas ? '⏳ Reiniciando...' : '🔄 Reiniciar'}
+          </button>
           <button
             className="btn-nova-cartela"
             onClick={handleReiniciarCartelas}
