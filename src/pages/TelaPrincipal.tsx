@@ -8,8 +8,9 @@ import winSound from '../assets/win.mp3';
 import { useBingo } from '../context/BingoContext';
 import { atualizarNumerosSelecionados } from '../api';
 import { ModalValidacao } from '../components/ModalValidacao';
+import { ModalSessaoPrincipal } from '../components/ModalSessaoPrincipal';
 import './TelaPrincipal.css';
-import logoJB from '../assets/images/Logo_JB_Joice_Bingo_Azul.png'; 
+import logoJB from '../assets/images/Logo_JB_Joice_Bingo_Azul.png';
 
 const allNumbers = Array.from({ length: 80 }, (_, i) => i + 1);
 
@@ -24,12 +25,14 @@ export function TelaPrincipalPage() {
     setNumbersDrawn,
     setCurrentNumber,
     setIsRolling,
+    setSessaoAtual,
     reiniciarTodasAsCartelas,
     removerJogador,
     ativarPoder,
     trocarCartelas,
   } = useBingo();
 
+  const [modalSessaoAberto, setModalSessaoAberto] = useState(true);
   const [reiniciandoCartelas, setReinicandoCartelas] = useState(false);
   const [trocandoCartelas, setTrocandoCartelas] = useState(false);
   const [validacaoModal, setValidacaoModal] = useState<{
@@ -184,6 +187,11 @@ export function TelaPrincipalPage() {
     setValidacaoModal((prev) => ({ ...prev, isOpen: false }));
   };
 
+  const handleEntrarSessao = (codigoSessao: number) => {
+    setSessaoAtual(codigoSessao);
+    setModalSessaoAberto(false);
+  };
+
   const handleRemoverJogador = async (jogadorId: string) => {
     try {
       await removerJogador(jogadorId);
@@ -303,6 +311,11 @@ export function TelaPrincipalPage() {
           </div>
         </div>
       </div>
+
+      <ModalSessaoPrincipal
+        isOpen={modalSessaoAberto}
+        onSubmit={handleEntrarSessao}
+      />
 
       <ModalValidacao
         isOpen={validacaoModal.isOpen}

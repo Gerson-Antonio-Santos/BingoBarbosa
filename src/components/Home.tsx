@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getServerUrls } from '../utils/getServerUrl';
-import { useBingo } from '../context/BingoContext';
 import {
-  criarOuBuscarSessao,
   listarSessoes,
   deletarSessaoComJogadores,
 } from '../api/sessaoController';
@@ -13,17 +11,10 @@ import './Home.css';
 
 export function Home() {
   const navigate = useNavigate();
-  const { setSessaoAtual } = useBingo();
   const [loading, setLoading] = useState(false);
   const [urls, setUrls] = useState(getServerUrls());
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [showUrlInfo, setShowUrlInfo] = useState(false);
-
-  // Modal de sessão
-  const [showSessaoModal, setShowSessaoModal] = useState(false);
-  const [codigoSessao, setCodigoSessao] = useState('');
-  const [sessaoErro, setSessaoErro] = useState('');
-  const [criandoSessao, setCriandoSessao] = useState(false);
 
   // Lista de sessões ativas
   const [sessoes, setSessoes] = useState<SessaoPrincipal[]>([]);
@@ -43,36 +34,6 @@ export function Home() {
       setSessoes(lista);
     } finally {
       setCarregandoSessoes(false);
-    }
-  };
-
-  const handleClickPrincipal = () => {
-    setCodigoSessao('');
-    setSessaoErro('');
-    setShowSessaoModal(true);
-  };
-
-  const handleConfirmarSessao = async () => {
-    const codigo = parseInt(codigoSessao.trim());
-    if (isNaN(codigo) || codigo <= 0) {
-      setSessaoErro('Digite um código numérico válido');
-      return;
-    }
-
-    setCriandoSessao(true);
-    setSessaoErro('');
-    try {
-      const sessao = await criarOuBuscarSessao(codigo);
-      if (!sessao) {
-        setSessaoErro('Erro ao criar sessão. Tente novamente.');
-        return;
-      }
-      setSessaoAtual(codigo);
-      setShowSessaoModal(false);
-      setLoading(true);
-      setTimeout(() => navigate('/TelaPrincipal'), 300);
-    } finally {
-      setCriandoSessao(false);
     }
   };
 
@@ -121,7 +82,7 @@ export function Home() {
         <div className="screen-selector">
           <button
             className="screen-button principal-button"
-            onClick={handleClickPrincipal}
+            onClick={() => handleNavigate('/TelaPrincipal')}
             disabled={loading}
           >
             <div className="button-icon">🎲</div>
@@ -236,47 +197,6 @@ export function Home() {
           <div className="info-item"><span className="info-icon">🔄</span><span>Tudo sincroniza em tempo real entre os dispositivos</span></div>
         </div>
       </div>
-
-      {/* Modal de código de sessão */}
-      {showSessaoModal && (
-        <div className="sessao-modal-overlay" onClick={() => setShowSessaoModal(false)}>
-          <div className="sessao-modal-content" onClick={(e) => e.stopPropagation()}>
-            <h2>🎲 Tela Principal</h2>
-            <p>Digite o código numérico da sessão para iniciar ou continuar um jogo</p>
-
-            <input
-              type="number"
-              value={codigoSessao}
-              onChange={(e) => { setCodigoSessao(e.target.value); setSessaoErro(''); }}
-              placeholder="Ex: 1234"
-              className="sessao-modal-input"
-              autoFocus
-              min={1}
-              onKeyDown={(e) => e.key === 'Enter' && handleConfirmarSessao()}
-              disabled={criandoSessao}
-            />
-
-            {sessaoErro && <p className="sessao-modal-erro">{sessaoErro}</p>}
-
-            <div className="sessao-modal-buttons">
-              <button
-                className="sessao-modal-btn-cancelar"
-                onClick={() => setShowSessaoModal(false)}
-                disabled={criandoSessao}
-              >
-                Cancelar
-              </button>
-              <button
-                className="sessao-modal-btn-confirmar"
-                onClick={handleConfirmarSessao}
-                disabled={!codigoSessao.trim() || criandoSessao}
-              >
-                {criandoSessao ? 'Aguarde...' : 'Entrar'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

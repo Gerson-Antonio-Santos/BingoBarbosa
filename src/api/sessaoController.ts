@@ -3,7 +3,49 @@ import { supabase } from './supabase';
 export interface SessaoPrincipal {
   id: string;
   sessao: number;
+  password: string;
   data_criacao: string;
+}
+
+export async function criarOuBuscarSessaoComSenha(
+  codigo: number,
+  senha: string
+): Promise<{ sessao: SessaoPrincipal | null; erro?: string }> {
+  try {
+    const { data: existente, error: erroBusca } = await supabase
+      .from('sessao_principal')
+      .select('*')
+      .eq('sessao', codigo)
+      .maybeSingle();
+
+    if (erroBusca) {
+      console.error('Erro ao buscar sessão:', erroBusca);
+      return { sessao: null, erro: 'Erro ao verificar sessão.' };
+    }
+
+    if (existente) {
+      if (existente.password !== senha) {
+        return { sessao: null, erro: 'Senha incorreta para esta sessão.' };
+      }
+      return { sessao: existente as SessaoPrincipal };
+    }
+
+    const { data, error } = await supabase
+      .from('sessao_principal')
+      .insert([{ sessao: codigo, password: senha }])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Erro ao criar sessão:', error);
+      return { sessao: null, erro: 'Erro ao criar sessão.' };
+    }
+
+    return { sessao: data as SessaoPrincipal };
+  } catch (err) {
+    console.error('Erro ao criar/buscar sessão:', err);
+    return { sessao: null, erro: 'Erro inesperado.' };
+  }
 }
 
 export async function criarOuBuscarSessao(codigo: number): Promise<SessaoPrincipal | null> {
