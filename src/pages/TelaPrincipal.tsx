@@ -9,6 +9,8 @@ import { useBingo } from '../context/BingoContext';
 import { atualizarNumerosSelecionados } from '../api';
 import { ModalValidacao } from '../components/ModalValidacao';
 import { ModalSessaoPrincipal } from '../components/ModalSessaoPrincipal';
+import { ModalQrCode } from '../components/ModalQrCode';
+import { getServerUrls } from '../utils/getServerUrl';
 import './TelaPrincipal.css';
 import logoJB from '../assets/images/Logo_JB_Joice_Bingo_Azul.png';
 
@@ -33,6 +35,7 @@ export function TelaPrincipalPage() {
   } = useBingo();
 
   const [modalSessaoAberto, setModalSessaoAberto] = useState(true);
+  const [qrCodeAberto, setQrCodeAberto] = useState(false);
   const [reiniciandoCartelas, setReinicandoCartelas] = useState(false);
   const [trocandoCartelas, setTrocandoCartelas] = useState(false);
   const [validacaoModal, setValidacaoModal] = useState<{
@@ -265,6 +268,9 @@ export function TelaPrincipalPage() {
             <div className="sessao-badge">Sessão #{sessaoAtual}</div>
           )}
         </div>
+        <button className="btn-qr-code" onClick={() => setQrCodeAberto(true)}>
+          📷 QR Code
+        </button>
 
         <div className="current-number">
           {isRolling ? <div className="rolling-ball"></div> : currentNumber ?? '--'}
@@ -315,6 +321,12 @@ export function TelaPrincipalPage() {
       <ModalSessaoPrincipal
         isOpen={modalSessaoAberto}
         onSubmit={handleEntrarSessao}
+      />
+
+      <ModalQrCode
+        isOpen={qrCodeAberto}
+        url={getServerUrls().cartelajogador}
+        onClose={() => setQrCodeAberto(false)}
       />
 
       <ModalValidacao
